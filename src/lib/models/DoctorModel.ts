@@ -6,16 +6,18 @@ export interface IDoctor extends Document {
   email: string;
   phone: string;
   specialty:
-     "Cardiology"
-     "Dermatology"
-     "Neurology"
-     "Orthopedics"
-     "Pediatrics"
-     "Psychiatry"
-     "Radiology"
-     "General Practice"
-     "Oncology"
-     "Gynecology";
+     | "Cardiology"
+     | "Dermatology"
+     | "Neurology"
+     | "Orthopedics"
+     | "Pediatrics"
+     | "Psychiatry"
+     | "Radiology"
+     | "General Practice"
+     | "Oncology"
+     | "Gynecology";
+
+
   gender: "Male" | "Female" | "Other";
   experience: number;
   licenseNumber: string;
