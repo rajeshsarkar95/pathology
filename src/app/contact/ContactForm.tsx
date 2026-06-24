@@ -5,23 +5,22 @@ import toast from "react-hot-toast";
 
 interface ContactData { name: string; contact: string; message: string; }
 
-export default function ContactForm() {
+export default function ContactForm(){
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, reset } = useForm<ContactData>();
 
-  const onSubmit = async (data: ContactData) => {
+  const onSubmit = async (data: ContactData)=>{
     setLoading(true);
-    await new Promise(r => setTimeout(r, 900));
+    await new Promise(r => setTimeout(r,900));
     setLoading(false);
     toast.success("Message sent! We'll reply within 2 hours.");
     reset();
   };
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
       <div>
         <label className="form-label">Your Name</label>
-        <input {...register("name", { required: true })} className="form-input" placeholder="Full name" />
+        <input {...register("name",{required:true})} className="form-input" placeholder="Full name"/>
       </div>
       <div>
         <label className="form-label">Phone or Email</label>
