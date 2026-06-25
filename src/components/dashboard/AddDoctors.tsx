@@ -34,7 +34,7 @@ type DoctorFormData = Omit<Doctor, "id" | "avatarColor">;
 type FormErrors = Partial<Record<keyof DoctorFormData,string>>;
 type AvatarColor = "blue" | "violet" | "emerald" | "rose" | "amber";
 
-const API_URL = "http://localhost:3000/api/doctors";
+const API_URL = "/api/doctors";
 
 const SPECIALTIES: Specialty[] = [
   "Cardiology", "Dermatology", "General Practice", "Gynecology",
