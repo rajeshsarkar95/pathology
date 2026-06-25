@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FileText, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { getStatusConfig } from "@/lib/utils";
 import type {Report,DashboardStats} from "@/types";

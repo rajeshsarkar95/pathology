@@ -8,10 +8,10 @@ interface ContactData { name: string; contact: string; message: string; }
 export default function ContactForm(){
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, reset } = useForm<ContactData>();
-
+  
   const onSubmit = async (data: ContactData)=>{
     setLoading(true);
-    await new Promise(r => setTimeout(r,900));
+    await new Promise(r =>setTimeout(r,900));
     setLoading(false);
     toast.success("Message sent! We'll reply within 2 hours.");
     reset();

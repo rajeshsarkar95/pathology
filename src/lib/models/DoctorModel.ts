@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, {Document,Schema} from "mongoose";
 
 export interface IDoctor extends Document {
   firstName: string;
@@ -16,8 +16,6 @@ export interface IDoctor extends Document {
      | "General Practice"
      | "Oncology"
      | "Gynecology";
-
-
   gender: "Male" | "Female" | "Other";
   experience: number;
   licenseNumber: string;
@@ -27,7 +25,6 @@ export interface IDoctor extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
-
 const DoctorSchema = new Schema<IDoctor>(
   {
     firstName:{type:String,required:true},
@@ -58,7 +55,7 @@ const DoctorSchema = new Schema<IDoctor>(
       default: "blue",
     },
   },
-  { timestamps: true }
+  {timestamps:true}
 );
 
 export const Doctor =

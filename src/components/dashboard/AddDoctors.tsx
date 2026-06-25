@@ -81,6 +81,19 @@ const EMPTY_FORM: DoctorFormData = {
 
 let avatarIndex = 0;
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function getRawProp(raw: unknown, key: string): unknown {
+  return (raw as Record<string, unknown>)[key];
+}
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return String(err);
+}
+
+// ── Validation ─────────────────────────────────────────────────────────────────
+
 function validateForm(data: DoctorFormData):FormErrors{
   const errors: FormErrors = {};
   if (!data.firstName.trim())errors.firstName = "Required.";
@@ -104,28 +117,40 @@ function validateForm(data: DoctorFormData):FormErrors{
   return errors;
 }
 
+// ── API types ──────────────────────────────────────────────────────────────────
+
 interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
 }
 
-function normalizeDoctor(raw: any): Doctor {
+// ── Normalizer ─────────────────────────────────────────────────────────────────
+
+function normalizeDoctor(raw: unknown): Doctor {
   return {
-    id: String(raw._id ?? raw.id ?? crypto.randomUUID()),
-    firstName: raw.firstName ?? "",
-    lastName: raw.lastName ?? "",
-    email: raw.email ?? "",
-    phone: raw.phone ?? "",
-    specialty: (raw.specialty as Specialty) ?? "General Practice",
-    gender: (raw.gender as Gender) ?? "Male",
-    experience: Number(raw.experience ?? 0),
-    licenseNumber: raw.licenseNumber ?? "",
-    availableDays: Array.isArray(raw.availableDays) ? raw.availableDays : [],
-    joiningDate: raw.joiningDate ?? new Date().toISOString().split("T")[0],
-    avatarColor: (raw.avatarColor as AvatarColor) ?? AVATAR_COLORS[avatarIndex++ % AVATAR_COLORS.length],
+    id: String(getRawProp(raw, "_id") ?? getRawProp(raw, "id") ?? crypto.randomUUID()),
+    firstName: String(getRawProp(raw, "firstName") ?? ""),
+    lastName: String(getRawProp(raw, "lastName") ?? ""),
+    email: String(getRawProp(raw, "email") ?? ""),
+    phone: String(getRawProp(raw, "phone") ?? ""),
+    specialty: (getRawProp(raw, "specialty") as Specialty) ?? "General Practice",
+    gender: (getRawProp(raw, "gender") as Gender) ?? "Male",
+    experience: Number(getRawProp(raw, "experience") ?? 0),
+    licenseNumber: String(getRawProp(raw, "licenseNumber") ?? ""),
+    availableDays: Array.isArray(getRawProp(raw, "availableDays"))
+      ? (getRawProp(raw, "availableDays") as WeekDay[])
+      : [],
+    joiningDate: String(
+      getRawProp(raw, "joiningDate") ?? new Date().toISOString().split("T")[0]
+    ),
+    avatarColor:
+      (getRawProp(raw, "avatarColor") as AvatarColor) ??
+      AVATAR_COLORS[avatarIndex++ % AVATAR_COLORS.length],
   };
 }
+
+// ── Small UI components ────────────────────────────────────────────────────────
 
 interface FieldProps {
   label:string;
@@ -149,6 +174,7 @@ const Field:React.FC<FieldProps> = ({label,error,children,className = "" })=>(
     )}
   </div>
 );
+
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement>{
   hasError?:boolean;
 }
@@ -161,6 +187,7 @@ const Input:React.FC<InputProps> = ({hasError,className = "",...props})=>(
       ${className}`}
   />
 );
+
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   hasError?:boolean;
 }
@@ -176,11 +203,13 @@ const Select:React.FC<SelectProps> = ({hasError,children,className = "", ...prop
     {children}
   </select>
 );
+
 const SpecialtyBadge: React.FC<{specialty:Specialty}> = ({specialty})=>(
   <span className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full ring-1 ${SPECIALTY_STYLES[specialty]}`}>
     {specialty}
   </span>
 );
+
 interface StatCardProps {label:string;value:string | number;icon:React.ReactNode}
 const StatCard: React.FC<StatCardProps> = ({label,value,icon})=>(
   <div className="flex items-center gap-3 bg-white rounded-xl border border-slate-100 px-4 py-3">
@@ -281,6 +310,7 @@ const Modal: React.FC<ModalProps> = ({isOpen,onClose,children})=>{
     </div>
   );
 };
+
 const Divider: React.FC<{label:string}>=({label})=>(
   <div className="flex items-center gap-3 col-span-2 mt-1">
     <div className="h-px flex-1 bg-slate-100"/>
@@ -288,6 +318,7 @@ const Divider: React.FC<{label:string}>=({label})=>(
     <div className="h-px flex-1 bg-slate-100"/>
   </div>
 );
+
 const ErrorBanner: React.FC<{message:string;onDismiss:()=>void}> = ({message,onDismiss})=>(
   <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
     <span>{message}</span>
@@ -298,6 +329,8 @@ const ErrorBanner: React.FC<{message:string;onDismiss:()=>void}> = ({message,onD
     </button>
   </div>
 );
+
+// ── Main component ─────────────────────────────────────────────────────────────
 
 function AddDoctors() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -322,8 +355,8 @@ function AddDoctors() {
         throw new Error(json.message ?? `Failed to load doctors (${res.status})`);
       }
       setDoctors((json.data ?? []).map(normalizeDoctor));
-    } catch (err: any) {
-      setApiError(err.message ?? "Failed to load doctors.");
+    } catch (err: unknown) {
+      setApiError(getErrorMessage(err) || "Failed to load doctors.");
     } finally {
       setIsLoading(false);
     }
@@ -350,8 +383,8 @@ function AddDoctors() {
       setFormData(EMPTY_FORM);
       setErrors({});
       setIsModalOpen(false);
-    } catch (err: any) {
-      setApiError(err.message ?? "Failed to add doctor.");
+    } catch (err: unknown) {
+      setApiError(getErrorMessage(err) || "Failed to add doctor.");
     } finally {
       setIsSaving(false);
     }
@@ -362,22 +395,24 @@ function AddDoctors() {
     setApiError(null);
     try {
       const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-      const json: ApiResponse<unknown> = await res.json().catch(() => ({ success: res.ok }));
+      const json: ApiResponse<unknown> = await res.json().catch(() => ({ success: res.ok, data: null }));
       if (!res.ok || json.success === false) {
         throw new Error(json.message ?? `Failed to remove doctor (${res.status})`);
       }
       setDoctors((p) => p.filter((d) => d.id !== id));
-    } catch (err: any) {
-      setApiError(err.message ?? "Failed to remove doctor.");
+    } catch (err: unknown) {
+      setApiError(getErrorMessage(err) || "Failed to remove doctor.");
     } finally {
       setDeletingId(null);
     }
   };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((p) => ({ ...p, [name]: name === "experience" ? Number(value) : value }));
     setErrors((p) => ({ ...p, [name]: undefined }));
   };
+
   const handleDayToggle = (day: WeekDay) => {
     setFormData((p) => ({
       ...p,
@@ -387,17 +422,20 @@ function AddDoctors() {
     }));
     setErrors((p) => ({...p,availableDays:undefined}));
   };
+
   const handleSubmit = ()=>{
     const errs = validateForm(formData);
     if (Object.keys(errs).length > 0) {setErrors(errs); return;}
     createDoctor(formData);
   };
+
   const handleClose = () => {
     if (isSaving) return;
     setIsModalOpen(false);
     setFormData(EMPTY_FORM);
     setErrors({});
   };
+
   const filtered = doctors.filter((d) => {
     const q = searchQuery.toLowerCase();
     return (
@@ -405,10 +443,12 @@ function AddDoctors() {
       (filterSpecialty === "All" || d.specialty === filterSpecialty)
     );
   });
+
   const avgExp = doctors.length
     ? Math.round(doctors.reduce((a, d) => a + d.experience, 0) / doctors.length)
     : 0;
   const uniqueSpecialties = new Set(doctors.map((d) => d.specialty)).size;
+
   const IconUsers = () => (
     <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
       <circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-3 2-4.5 5-4.5s5 1.5 5 4.5"/>
@@ -478,6 +518,7 @@ function AddDoctors() {
             <StatCard label="Avg. experience" value={`${avgExp} yr${avgExp !== 1 ? "s" : ""}`} icon={<IconBriefcase />} />
           </div>
         )}
+
         {doctors.length > 0 && (
           <div className="flex gap-2 mb-4 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">
@@ -545,6 +586,7 @@ function AddDoctors() {
           </div>
         )}
       </div>
+
       <Modal isOpen={isModalOpen} onClose={handleClose}>
         <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div>
@@ -664,4 +706,5 @@ function AddDoctors() {
     </div>
   );
 }
+
 export default AddDoctors;
